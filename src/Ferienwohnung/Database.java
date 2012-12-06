@@ -20,14 +20,16 @@ private ResultSet rs;
 	}
 	
 	public String[] getFerienwohnungen(String pLand,String pZimmer,String pDatumAn, String pDatumAb, String pAusstattung) throws SQLException{
-		String sql = 	"SELECT Ferienwohnung.Ferienwohnungs_ID,Ferienwohnung.Name" +
-					 	" FROM ((((Ferienwohnung f LEFT OUTER JOIN Buchung b ON f.Ferienwohnungs_ID = b.Ferienwohnungs_ID)"+
-					 	" INNER JOIN Land l ON f.Land_ID = l.Land_ID)"+
-					 	" INNER JOIN istAusgestattetMit iau ON f.Ferienwohnungs_ID = iau.Ferienwohnungs_ID)"+
-					 	" INNER JOIN Ausstattung au ON iau.Ausstattungs_Name = au.name)"+
-					 	" WHERE l.Name = '"+pLand+"' AND zimmer > "+pZimmer+
-					 	" AND b.Ferienwohnungs_ID IS NULL OR NOT b.datum_von > '"+pDatumAn+"'"+
-					 	" AND b.Ferienwohnungs_ID IS NULL OR NOT b.datum_bis < '"+pDatumAb+"'";
+		String sql = 	"SELECT f.ferienwohnungs_ID,f.Name"+
+						" FROM (((dbsys22.Ferienwohnung f INNER JOIN dbsys22.Land l ON f.Land_ID = l.Land_ID)"+
+						" INNER JOIN dbsys22.istAusgestattetMit iau ON f.Ferienwohnungs_ID = iau.Ferienwohnungs_ID)"+
+						" INNER JOIN dbsys22.Ausstattung au ON iau.Ausstattungs_Name = au.name)"+
+						" WHERE zimmer = "+pZimmer+" AND l.Name = '"+pLand+"'"+
+						" AND f.ferienwohnungs_ID NOT IN"+
+						" (SELECT ferienwohnungs_ID"+ 
+						" FROM dbsys22.Buchung"+
+						" WHERE datum_bis > '"+pDatumAn+"' AND datum_von < '"+pDatumAb+"')";
+		
 		if(!pAusstattung.isEmpty()){
 			sql+= " AND au.name = '"+pAusstattung+"'";
 		}
