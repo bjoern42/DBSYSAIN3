@@ -22,6 +22,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
+import Ferienwohnung.Database;
+
 
 public class FillDatabase extends JFrame implements ActionListener{
 private static final long serialVersionUID = 1L;
@@ -29,9 +31,7 @@ private JTextField tfTable = new JTextField();
 private JTextArea taOutput = new JTextArea();
 private JButton btInsert = new JButton("Insert");
 private JFileChooser chooser = new JFileChooser();
-private Connection conn;
-private Statement stmt;
-private ResultSet rs;
+private Database database;
 
 	public static void main(String[] args) {
 		new FillDatabase();
@@ -46,17 +46,14 @@ private ResultSet rs;
 		setSize(500,500);
 		setVisible(true);
 		try {
-			Class.forName("oracle.jdbc.driver.OracleDriver");
-			String url= "jdbc:oracle:thin:@oracle11g.in.htwg-konstanz.de:1521:ora11g";
-			String loginData[] = JOptionPaneTwoInput.showInputDialog(this, "Bitte Login Daten einegeben",JOptionPane.OK_OPTION);
-			conn= DriverManager.getConnection(url,loginData[0],loginData[1]); 
-			stmt = conn.createStatement(); 
+			String loginData[] = JOptionPaneMultiInput.showInputDialog(this, "Bitte Login Daten einegeben",JOptionPane.OK_OPTION,2,"Username","Passwort");
+			database = new Database(null, loginData[0], loginData[1]);
+			taOutput.append("Erfolgreich angemeldet!\n");
 		} catch (ClassNotFoundException e) {
 			taOutput.append(e.toString()+"\n");
 		} catch (SQLException e) {
 			taOutput.append(e.toString()+"\n");
 		}
-		taOutput.append("Erfolgreich angemeldet!\n");
 	}
 	
 	private void insert(String pTableName, File pValues) throws IOException, SQLException{
@@ -81,7 +78,7 @@ private ResultSet rs;
 							builder.append(String.valueOf((int)(min+Math.random()*max)));
 						}else{
 							try{
-								builder.append(String.valueOf((int)(1+Math.random()*getMaxID(tmp[j].substring(6)))));
+								builder.append(String.valueOf((int)(1+Math.random()*database.getMaxID(tmp[j].substring(6)))));
 							}catch(Exception e){
 								taOutput.append(e.toString()+"\n");
 							}
@@ -101,18 +98,11 @@ private ResultSet rs;
 			taOutput.append(sql+"\n");
 			repaint();
 			try{
-				stmt.executeUpdate(sql); 
+				database.query(sql); 
 			}catch(SQLException e){
 				taOutput.append(e.toString()+"\n");
 			}
 		}
-	}
-	
-	private int getMaxID(String pTableName) throws SQLException{
-		String sql = "SELECT count(*) FROM "+pTableName;
-		rs = stmt.executeQuery(sql); 
-		rs.next();
-		return rs.getInt("count(*)");
 	}
 
 	@Override
@@ -132,22 +122,25 @@ private ResultSet rs;
 		}.start();	
 	}
 	
-	private static class JOptionPaneTwoInput extends JOptionPane{
+	public static class JOptionPaneMultiInput extends JOptionPane{
 		private static final long serialVersionUID = 1L;
 		
-		public static String[] showInputDialog(Component c, String title,int type){
-			JTextField tf1 = new JTextField(5);
-			JTextField tf2 = new JTextField(5);
+		public static String[] showInputDialog(Component c, String title,int type, int amount, String ...titles){
+			JTextField tfInputs[] = new JTextField[amount];
 			JPanel myPanel = new JPanel();
-			myPanel.add(new JLabel("Username:"));
-		    myPanel.add(tf1);
-		    myPanel.add(Box.createHorizontalStrut(15)); // a spacer
-		    myPanel.add(new JLabel("Password:"));
-		    myPanel.add(tf2);
+			for(int i=0;i<amount;i++){
+				tfInputs[i] = new JTextField(10);
+				myPanel.add(new JLabel(titles[i]));
+				myPanel.add(tfInputs[i]);
+				if(i<amount-1){
+					myPanel.add(Box.createHorizontalStrut(15));
+				}
+			}
 			JOptionPane.showConfirmDialog(c, myPanel,title, JOptionPane.OK_CANCEL_OPTION);
-			String retVal[] = new String[2];
-			retVal[0] = tf1.getText();
-			retVal[1] = tf2.getText();
+			String retVal[] = new String[amount];
+			for(int i=0;i<amount;i++){
+				retVal[i] = tfInputs[i].getText();
+			}
 			return retVal;
 		}
 	}

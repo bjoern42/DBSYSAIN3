@@ -7,11 +7,13 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 public final class Database {
+private GUI gui;
 private Connection conn;
 private Statement stmt;
 private ResultSet rs;	
 	
-	public Database(String user,String pass) throws ClassNotFoundException, SQLException{
+	public Database(GUI pGui, String user,String pass) throws ClassNotFoundException, SQLException{
+		gui = pGui;
 		Class.forName("oracle.jdbc.driver.OracleDriver");
 		String url= "jdbc:oracle:thin:@oracle11g.in.htwg-konstanz.de:1521:ora11g";
 		conn= DriverManager.getConnection(url,user,pass); 
@@ -19,12 +21,23 @@ private ResultSet rs;
 		conn.setAutoCommit(false);
 	}
 	
-	public String[] getFerienwohnungen(String pLand,String pZimmer,String pDatumAn, String pDatumAb, String pAusstattung) throws SQLException{
+	public void query(String sql) throws SQLException{
+		System.out.println(sql);
+		try{
+			stmt.executeUpdate(sql);
+			conn.commit();
+		}catch(SQLException e){
+			conn.rollback();
+			throw e;
+		}
+	}
+	
+	public void getFerienwohnungen(String pLand,String pZimmer,String pDatumAn, String pDatumAb, String pAusstattung) throws SQLException{
 		String sql = 	"SELECT f.ferienwohnungs_ID,f.Name"+
 						" FROM (((dbsys22.Ferienwohnung f INNER JOIN dbsys22.Land l ON f.Land_ID = l.Land_ID)"+
 						" INNER JOIN dbsys22.istAusgestattetMit iau ON f.Ferienwohnungs_ID = iau.Ferienwohnungs_ID)"+
 						" INNER JOIN dbsys22.Ausstattung au ON iau.Ausstattungs_Name = au.name)"+
-						" WHERE zimmer = "+pZimmer+" AND l.Name = '"+pLand+"'"+
+						" WHERE zimmer > "+pZimmer+" AND l.Name = '"+pLand+"'"+
 						" AND f.ferienwohnungs_ID NOT IN"+
 						" (SELECT ferienwohnungs_ID"+ 
 						" FROM dbsys22.Buchung"+
@@ -34,17 +47,20 @@ private ResultSet rs;
 			sql+= " AND au.name = '"+pAusstattung+"'";
 		}
 		System.out.println(sql);
-		rs = stmt.executeQuery(sql); 
-		while(rs.next()){
-			System.out.println(rs.getString(0)+rs.getString(1));
+		rs = stmt.executeQuery(sql);
+		boolean empty = false;
+		while((empty = rs.next())){
+			gui.addFerienwohnung(rs.getString("ferienwohnungs_ID"),rs.getString("Name"));
 		}
-		return null;
+		if(empty){
+			gui.addFerienwohnung("-1","Keine Treffer!");
+		}
 	}
 	
 	public void ferienwohnungBuchen(String pFerienwohnungsID, String pKundenID, String pDatumAn, String pDatumAb) throws SQLException{
-		String sql = "INSERT INTO Buchung (Buchungs_ID,Kunden_ID,Ferienwohnungs_ID,Datum_Von,Datum_Bis) VALUES ("+getMaxID("Buchung")+","+pKundenID+","+pFerienwohnungsID+","+pDatumAn+","+pDatumAb;
+		String sql = "INSERT INTO Buchung (Buchungs_ID,Kunden_ID,Ferienwohnungs_ID,Datum_Von,Datum_Bis) VALUES ("+(getMaxID("Buchung")+1)+","+pKundenID+","+pFerienwohnungsID+",'"+pDatumAn+"','"+pDatumAb+"')";
 		System.out.println(sql);
-		stmt.executeUpdate(sql);
+		query(sql);
 	}
 	
 	public int getMaxID(String pTableName) throws SQLException{
