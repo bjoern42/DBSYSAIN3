@@ -1,4 +1,5 @@
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
@@ -9,9 +10,13 @@ import java.io.InputStreamReader;
 import java.sql.*;
 import java.util.LinkedList;
 
+import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
@@ -41,14 +46,16 @@ private ResultSet rs;
 		setVisible(true);
 		try {
 			Class.forName("oracle.jdbc.driver.OracleDriver");
-			String url= "jdbc:oracle:thin:@oracle11g.in.htwg-konstanz.de:1521:ora11g"; 
-			conn= DriverManager.getConnection(url,"dbsys22","admin22"); 
+			String url= "jdbc:oracle:thin:@oracle11g.in.htwg-konstanz.de:1521:ora11g";
+			String loginData[] = JOptionPaneTwoInput.showInputDialog(this, "Bitte Login Daten einegeben",JOptionPane.OK_OPTION);
+			conn= DriverManager.getConnection(url,loginData[0],loginData[1]); 
 			stmt = conn.createStatement(); 
 		} catch (ClassNotFoundException e) {
 			taOutput.append(e.toString()+"\n");
 		} catch (SQLException e) {
 			taOutput.append(e.toString()+"\n");
 		}
+		taOutput.append("Erfolgreich angemeldet!\n");
 	}
 	
 	private void insert(String pTableName, File pValues) throws IOException, SQLException{
@@ -122,5 +129,25 @@ private ResultSet rs;
 				}
 			}
 		}.start();	
+	}
+	
+	private static class JOptionPaneTwoInput extends JOptionPane{
+		private static final long serialVersionUID = 1L;
+		
+		public static String[] showInputDialog(Component c, String title,int type){
+			JTextField tf1 = new JTextField(5);
+			JTextField tf2 = new JTextField(5);
+			JPanel myPanel = new JPanel();
+			myPanel.add(new JLabel("Username:"));
+		    myPanel.add(tf1);
+		    myPanel.add(Box.createHorizontalStrut(15)); // a spacer
+		    myPanel.add(new JLabel("Password:"));
+		    myPanel.add(tf2);
+			JOptionPane.showConfirmDialog(c, myPanel,title, JOptionPane.OK_CANCEL_OPTION);
+			String retVal[] = new String[2];
+			retVal[0] = tf1.getText();
+			retVal[1] = tf2.getText();
+			return retVal;
+		}
 	}
 }
