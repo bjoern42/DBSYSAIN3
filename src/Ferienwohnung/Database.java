@@ -58,12 +58,19 @@ private ResultSet rs;
 	}
 	
 	public void ferienwohnungBuchen(String pFerienwohnungsID, String pKundenID, String pDatumAn, String pDatumAb) throws SQLException{
-		String sql = "INSERT INTO Buchung (Buchungs_ID,Kunden_ID,Ferienwohnungs_ID,Datum_Von,Datum_Bis) VALUES ("+(getMaxID("Buchung")+1)+","+pKundenID+","+pFerienwohnungsID+",'"+pDatumAn+"','"+pDatumAb+"')";
+		String sql = "INSERT INTO Buchung (Buchungs_ID,Kunden_ID,Ferienwohnungs_ID,Datum_Von,Datum_Bis) VALUES ("+(getMaxID("Buchung","Buchungs_ID")+1)+","+pKundenID+","+pFerienwohnungsID+",'"+pDatumAn+"','"+pDatumAb+"')";
 		System.out.println(sql);
 		query(sql);
 	}
 	
-	public int getMaxID(String pTableName) throws SQLException{
+	public int getMaxID(String pTableName,String pPrimaryKey) throws SQLException{
+		String sql = "SELECT max("+pPrimaryKey+") FROM "+pTableName;
+		rs = stmt.executeQuery(sql); 
+		rs.next();
+		return rs.getInt("count(*)");
+	}
+	
+	public int getEntries(String pTableName) throws SQLException{
 		String sql = "SELECT count(*) FROM "+pTableName;
 		rs = stmt.executeQuery(sql); 
 		rs.next();

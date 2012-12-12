@@ -78,7 +78,7 @@ private Database database;
 							builder.append(String.valueOf((int)(min+Math.random()*max)));
 						}else{
 							try{
-								builder.append(String.valueOf((int)(1+Math.random()*database.getMaxID(tmp[j].substring(6)))));
+								builder.append(String.valueOf((int)(1+Math.random()*database.getEntries(tmp[j].substring(6)))));
 							}catch(Exception e){
 								taOutput.append(e.toString()+"\n");
 							}
